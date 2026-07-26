@@ -1,0 +1,115 @@
+name: CRA evidence check
+description: Report machine-checkable CRA engineering evidence for a repository and its release bundle.
+author: moveeeax
+
+branding:
+  icon: check-square
+  color: blue
+
+inputs:
+  repo:
+    description: Path to the repository root to inspect.
+    required: false
+    default: "."
+  release-dir:
+    description: >-
+      Directory holding the built release artefacts (binaries, SBOM, checksum
+      manifest, signatures). Leave empty to skip the release-scoped checks.
+    required: false
+    default: ""
+  domain:
+    description: >-
+      Public domain to fetch security.txt from, e.g. example.com. Leave empty to
+      use the copy committed in the repository.
+    required: false
+    default: ""
+  only:
+    description: Comma-separated check IDs to run, e.g. "CRA-01,CRA-02". Empty runs all eight.
+    required: false
+    default: ""
+  exclude:
+    description: Comma-separated directory names to skip when walking the repository.
+    required: false
+    default: ".git,node_modules,vendor,dist,build,target,.terraform,.venv,venv"
+  strict:
+    description: Treat skipped checks as failures.
+    required: false
+    default: "false"
+  fail-on-findings:
+    description: Fail the step when a check fails. Set to "false" to report without blocking.
+    required: false
+    default: "true"
+  step-summary:
+    description: Append the markdown report to the GitHub job summary.
+    required: false
+    default: "true"
+
+outputs:
+  report-path:
+    description: Path to the JSON report written by this step.
+    value: ${{ steps.scan.outputs.report-path }}
+  outcome:
+    description: '"pass" when every selected check passed, "findings" otherwise.'
+    value: ${{ steps.scan.outputs.outcome }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{ github.action_path }}/go.mod
+        cache: false
+
+    - name: Build cra-evidence-check
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: go build -o "${RUNNER_TEMP}/cra-evidence-check" ./cmd/cra-evidence-check
+
+    - name: Run the evidence checks
+      id: scan
+      shell: bash
+      env:
+        INPUT_REPO: ${{ inputs.repo }}
+        INPUT_RELEASE_DIR: ${{ inputs.release-dir }}
+        INPUT_DOMAIN: ${{ inputs.domain }}
+        INPUT_ONLY: ${{ inputs.only }}
+        INPUT_EXCLUDE: ${{ inputs.exclude }}
+        INPUT_STRICT: ${{ inputs.strict }}
+        INPUT_FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+        INPUT_STEP_SUMMARY: ${{ inputs.step-summary }}
+      run: |
+        set -uo pipefail
+        bin="${RUNNER_TEMP}/cra-evidence-check"
+        report="${RUNNER_TEMP}/cra-evidence-report.json"
+
+        args=(scan --repo "${INPUT_REPO}" --exclude "${INPUT_EXCLUDE}")
+        [ -n "${INPUT_RELEASE_DIR}" ] && args+=(--release-dir "${INPUT_RELEASE_DIR}")
+        [ -n "${INPUT_DOMAIN}" ] && args+=(--domain "${INPUT_DOMAIN}")
+        [ -n "${INPUT_ONLY}" ] && args+=(--only "${INPUT_ONLY}")
+        [ "${INPUT_STRICT}" = "true" ] && args+=(--strict)
+
+        # Two renderings of the same run: JSON for machines, markdown for humans.
+        "${bin}" "${args[@]}" --format json --output "${report}"
+        status=$?
+        if [ "${status}" -gt 1 ]; then
+          echo "::error::cra-evidence-check could not run (exit ${status})"
+          exit "${status}"
+        fi
+
+        if [ "${INPUT_STEP_SUMMARY}" = "true" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          "${bin}" "${args[@]}" --format markdown --output "${GITHUB_STEP_SUMMARY}"
+        fi
+        "${bin}" "${args[@]}" --format text
+
+        echo "report-path=${report}" >> "${GITHUB_OUTPUT}"
+        if [ "${status}" -eq 0 ]; then
+          echo "outcome=pass" >> "${GITHUB_OUTPUT}"
+          exit 0
+        fi
+        echo "outcome=findings" >> "${GITHUB_OUTPUT}"
+        if [ "${INPUT_FAIL_ON_FINDINGS}" = "true" ]; then
+          echo "::error::cra-evidence-check reported findings"
+          exit 1
+        fi
+        echo "::warning::cra-evidence-check reported findings (fail-on-findings is false)"

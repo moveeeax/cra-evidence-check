@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (go ${{ matrix.go }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go: ["1.24.x", "stable"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race -count=1 ./...
+
+  lint:
+    name: gofmt and vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "${unformatted}" ]; then
+            echo "these files are not gofmt-clean:"
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+  action:
+    name: action end to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: A complete evidence bundle passes
+        uses: ./
+        with:
+          repo: testdata/repo/compliant
+          release-dir: testdata/release/complete
+
+      - name: A bundle with gaps is reported
+        id: gaps
+        uses: ./
+        continue-on-error: true
+        with:
+          repo: testdata/repo/gaps
+          release-dir: testdata/release/uncovered
+          step-summary: "false"
+
+      - name: The gap run must have failed
+        run: |
+          if [ "${{ steps.gaps.outcome }}" != "failure" ]; then
+            echo "expected the action to fail on the gaps fixture, got '${{ steps.gaps.outcome }}'"
+            exit 1
+          fi
+          if [ "${{ steps.gaps.outputs.outcome }}" != "findings" ]; then
+            echo "expected outcome=findings, got '${{ steps.gaps.outputs.outcome }}'"
+            exit 1
+          fi
+
+  dogfood:
+    name: dogfood (source-only checks on this repo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # This repository publishes no release bundle from CI, so only the two
+      # checks that apply to a source tree are run — and they must be clean.
+      - name: Disclosure policy and dependency pinning
+        uses: ./
+        with:
+          repo: "."
+          only: "CRA-05,CRA-07"
+          exclude: ".git,node_modules,vendor,dist,testdata"
+          strict: "true"
