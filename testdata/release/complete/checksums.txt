@@ -1,0 +1,2 @@
+af188cbdc95104c045d2c49a4a1c36778d11e18d2508f08bb38eaeb751103629  acme-gateway_1.4.0_linux_amd64.tar.gz
+06c03af468b87c0bdae4dcfa8066c39ff3a70a0bb58f6c60f53bb79b8b3fa9e0  acme-gateway.cdx.json

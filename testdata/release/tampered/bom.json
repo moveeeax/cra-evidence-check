@@ -1,0 +1,25 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "vault-bridge_5.0.0_linux_amd64",
+      "version": "5.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5873b9d10d4aaa4a840c449e2d5e9dc72709000207f2779c9076d0478ecf60bf"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "libcurl",
+      "version": "8.7.1"
+    }
+  ]
+}
