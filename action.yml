@@ -80,6 +80,10 @@ runs:
         INPUT_STEP_SUMMARY: ${{ inputs.step-summary }}
       run: |
         set -uo pipefail
+        # GitHub wraps composite run steps in `bash -e`; disable it because a
+        # findings result is a deliberate exit 1 that we capture and inspect
+        # below (otherwise the step aborts before recording outcome=findings).
+        set +e
         bin="${RUNNER_TEMP}/cra-evidence-check"
         report="${RUNNER_TEMP}/cra-evidence-report.json"
 
