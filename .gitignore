@@ -1,7 +1,9 @@
 # Build output
 /bin/
 /dist/
-cra-evidence-check
+# the built binary at the repo root (anchored, so it does NOT match the
+# cmd/cra-evidence-check/ source directory)
+/cra-evidence-check
 *.exe
 
 # Go
