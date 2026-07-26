@@ -1,0 +1,21 @@
+# Build output
+/bin/
+/dist/
+cra-evidence-check
+*.exe
+
+# Go
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local scratch — never commit real evidence bundles or customer material
+/scratch/
+/tmp/
+*.local.json

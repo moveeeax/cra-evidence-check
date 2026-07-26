@@ -1,0 +1,3 @@
+# Test fixtures are hashed byte for byte. Never let a checkout rewrite them.
+testdata/** -text
+* text=auto eol=lf
