@@ -19,3 +19,6 @@ coverage.html
 /scratch/
 /tmp/
 *.local.json
+
+# keep .exe release fixtures under testdata (see uncovered case)
+!testdata/**/*.exe
