@@ -1,0 +1,7 @@
+{
+  "name": "legacy-controller-tools",
+  "version": "0.3.0",
+  "dependencies": {
+    "lodash": "^4.17.0"
+  }
+}

@@ -1,0 +1,6 @@
+# RFC 9116 security.txt for acme.invalid
+Contact: mailto:security@acme.invalid
+Expires: 2035-01-01T00:00:00Z
+Policy: https://acme.invalid/security-policy
+Preferred-Languages: en, de
+Canonical: https://acme.invalid/.well-known/security.txt

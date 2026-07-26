@@ -1,0 +1,8 @@
+{
+  "name": "acme-gateway-ui",
+  "version": "1.4.0",
+  "private": true,
+  "dependencies": {
+    "preact": "10.24.3"
+  }
+}

@@ -1,0 +1,3 @@
+# unpinned: any release of these may be installed
+pyserial
+click>=8
