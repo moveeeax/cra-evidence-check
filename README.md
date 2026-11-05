@@ -43,7 +43,8 @@ cd cra-evidence-check
 make build          # -> bin/cra-evidence-check
 ```
 
-The tool has no dependencies outside the Go standard library.
+Requires Go 1.26 or newer. The tool has no dependencies outside the Go
+standard library.
 
 ## Usage example
 
@@ -139,20 +140,21 @@ do not fail the run unless you pass `--strict`.
 ## GitHub Action
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 
 - name: Build the release
   run: make release        # produces dist/ with artefacts, SBOM, checksums, signatures
 
 - name: CRA evidence check
-  uses: moveeeax/cra-evidence-check@main
+  uses: moveeeax/cra-evidence-check@v0.1.0
   with:
     repo: "."
     release-dir: dist
     domain: example.com
 ```
 
-The markdown report is appended to the job summary. Inputs: `repo`,
+Pin the action to a release tag (as above) or a commit SHA rather than a
+branch. The markdown report is appended to the job summary. Inputs: `repo`,
 `release-dir`, `domain`, `only`, `exclude`, `strict`, `fail-on-findings`,
 `step-summary`. Outputs: `report-path` (JSON report) and `outcome`
 (`pass` / `findings`).
@@ -206,5 +208,8 @@ See [SECURITY.md](SECURITY.md) for how to report a vulnerability.
 
 ## Status
 
-v0.1 — the eight checks above, and nothing more. Licence undecided; no licence
-file is present yet, so default copyright applies.
+v0.1 — the eight checks above, and nothing more.
+
+## License
+
+[MIT](LICENSE) © 2026 Michael Tarassov
